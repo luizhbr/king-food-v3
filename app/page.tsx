@@ -1,0 +1,874 @@
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+
+const MENU_URL = "https://kingfood.fe-v2.ola.click/products";
+const WA_URL = "https://wa.me/12673107535";
+const GROUP_URL = "https://chat.whatsapp.com/LtoVNE9AJ2u2nlrlruTxhd";
+const MAPS_URL = "https://maps.app.goo.gl/GR2gpipSMqZdH9Xy5";
+const INSTAGRAM_URL = "https://instagram.com/king.food_delivery";
+const SORTEIO_IG_POST_URL =
+  "https://www.instagram.com/p/DbjecIfC6kS/?igsh=MWF2dnZzZ3RudmF6Yw==";
+const LOGO = "/logo-kingfood.png.png";
+const INSTALL_DISMISS_KEY = "kf_v3_install_dismissed";
+
+type Tab = "home" | "menu" | "hours";
+
+const SIDE_LINKS: {
+  label: string;
+  icon: string;
+  action?: "hours" | "menu";
+  href?: string;
+}[] = [
+  { label: "Cardápio", icon: "🥣", action: "menu" },
+  { label: "Grupo WhatsApp", icon: "💬", href: GROUP_URL },
+  { label: "WhatsApp", icon: "📱", href: WA_URL },
+  { label: "Instagram", icon: "📸", href: INSTAGRAM_URL },
+  { label: "Google Maps", icon: "📍", href: MAPS_URL },
+  { label: "Horários e entrega", icon: "🕐", action: "hours" },
+];
+
+const HOURS = [
+  { day: 0, label: "Domingo", hours: "6:00 PM – 10:30 PM" },
+  { day: 1, label: "Segunda-feira", hours: "7:00 PM – 10:00 PM" },
+  { day: 2, label: "Terça-feira", hours: "7:00 PM – 10:30 PM" },
+  { day: 3, label: "Quarta-feira", hours: "7:00 PM – 10:00 PM" },
+  { day: 4, label: "Quinta-feira", hours: "7:00 PM – 10:00 PM" },
+  { day: 5, label: "Sexta-feira", hours: "Fechado" },
+  { day: 6, label: "Sábado", hours: "9:00 PM – 11:00 PM" },
+];
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
+declare global {
+  interface Window {
+    __kfDeferredPrompt?: BeforeInstallPromptEvent | null;
+  }
+}
+
+function WhatsAppIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+    </svg>
+  );
+}
+
+function InstallModal({
+  open,
+  onInstall,
+  onDismiss,
+}: {
+  open: boolean;
+  onInstall: () => void;
+  onDismiss: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center px-5">
+      <div className="absolute inset-0 bg-ink/50 backdrop-blur-sm" onClick={onDismiss} aria-hidden />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="install-title"
+        className="relative z-10 w-full max-w-sm rounded-3xl border border-ink/10 bg-cream p-6 shadow-2xl text-center"
+      >
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gold">
+          <img src={LOGO} alt="" className="h-11 w-11 object-contain" />
+        </div>
+        <h2 id="install-title" className="text-lg font-extrabold text-ink">
+          Instale nosso app
+        </h2>
+        <p className="mt-2 text-sm text-ink/60 leading-relaxed">
+          Peça mais rápido direto da tela inicial do seu celular.
+        </p>
+        <button
+          type="button"
+          onClick={onInstall}
+          className="mt-5 w-full kf-btn-ink py-3.5 text-sm"
+        >
+          Instalar agora
+        </button>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="mt-2 w-full py-2.5 text-sm font-medium text-ink/40 hover:text-ink/70 transition"
+        >
+          Agora não
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function Home() {
+  const [loading, setLoading] = useState(true);
+  const [showLogo, setShowLogo] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>("home");
+  const [iframeReady, setIframeReady] = useState(false);
+  const [canInstall, setCanInstall] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [installPlatform, setInstallPlatform] = useState<"android" | "ios" | "desktop">("android");
+  const [scrolled, setScrolled] = useState(false);
+  const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
+  const loadingDone = useRef(false);
+  const mainRef = useRef<HTMLElement>(null);
+  const ctaPrimaryRef = useRef<HTMLButtonElement>(null);
+  const ctaSecondaryRef = useRef<HTMLAnchorElement>(null);
+  const today = new Date().getDay();
+
+  const tryShowModal = useCallback(() => {
+    const dismissed = sessionStorage.getItem(INSTALL_DISMISS_KEY) === "1";
+    if (dismissed) return;
+    if (!deferredPrompt.current && !window.__kfDeferredPrompt) return;
+    setCanInstall(true);
+    if (loadingDone.current) setShowInstallModal(true);
+  }, []);
+
+  useEffect(() => {
+    const logoTimer = setTimeout(() => setShowLogo(true), 100);
+    const safetyTimer = setTimeout(() => {
+      loadingDone.current = true;
+      setLoading(false);
+      const dismissed = sessionStorage.getItem(INSTALL_DISMISS_KEY) === "1";
+      if (!dismissed && (deferredPrompt.current || window.__kfDeferredPrompt)) {
+        setCanInstall(true);
+        setShowInstallModal(true);
+      }
+    }, 1800);
+
+    const bannerTimer = setTimeout(() => {
+      const dismissed = sessionStorage.getItem(INSTALL_DISMISS_KEY) === "1";
+      if (dismissed) return;
+      if (deferredPrompt.current || window.__kfDeferredPrompt) return;
+
+      const ua = navigator.userAgent;
+      const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+      const isAndroid = /Android/.test(ua);
+      const isDesktop = !isIOS && !isAndroid;
+      setInstallPlatform(isIOS ? "ios" : isAndroid ? "android" : "desktop");
+      setShowInstallBanner(true);
+    }, 3000);
+
+    return () => {
+      clearTimeout(logoTimer);
+      clearTimeout(safetyTimer);
+      clearTimeout(bannerTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen || showInstallModal ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [drawerOpen, showInstallModal]);
+
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    const onScroll = () => setScrolled(el.scrollTop > 80);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [tab]);
+
+  // Alive CTA — random walk + magnetic mouse
+  useEffect(() => {
+    if (tab !== "home") return;
+
+    const buttons = [ctaPrimaryRef.current, ctaSecondaryRef.current].filter(Boolean) as HTMLElement[];
+    if (buttons.length === 0) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return;
+
+    const isTouch = window.matchMedia("(pointer: coarse)").matches;
+
+    const states = buttons.map(() => ({
+      cx: 0,
+      cy: 0,
+      cs: 1,
+      cr: 0,
+      tx: 0,
+      ty: 0,
+      ts: 1,
+      tr: 0,
+      nextChange: 0,
+      hovering: false,
+      mx: 0,
+      my: 0,
+    }));
+
+    const mouseHandlers = buttons.map((btn, i) => {
+      const onMove = (e: MouseEvent) => {
+        states[i].hovering = true;
+        const rect = btn.getBoundingClientRect();
+        states[i].mx = e.clientX - rect.left - rect.width / 2;
+        states[i].my = e.clientY - rect.top - rect.height / 2;
+      };
+      const onLeave = () => {
+        states[i].hovering = false;
+      };
+      if (!isTouch) {
+        btn.addEventListener("mousemove", onMove);
+        btn.addEventListener("mouseleave", onLeave);
+      }
+      return { onMove, onLeave };
+    });
+
+    let rafId: number;
+    const animate = (time: number) => {
+      buttons.forEach((btn, i) => {
+        const s = states[i];
+
+        if (s.hovering && !isTouch) {
+          s.tx = s.mx * 0.15;
+          s.ty = s.my * 0.2;
+          s.ts = 1.05;
+          s.tr = s.mx * 0.02;
+        } else {
+          if (time > s.nextChange) {
+            s.tx = (Math.random() - 0.5) * 10;
+            s.ty = (Math.random() - 0.5) * 8;
+            s.ts = 1 + Math.random() * 0.03;
+            s.tr = (Math.random() - 0.5) * 2;
+            s.nextChange = time + 1500 + Math.random() * 2000;
+          }
+        }
+
+        s.cx += (s.tx - s.cx) * 0.06;
+        s.cy += (s.ty - s.cy) * 0.06;
+        s.cs += (s.ts - s.cs) * 0.06;
+        s.cr += (s.tr - s.cr) * 0.06;
+
+        btn.style.transform = `translate(${s.cx}px, ${s.cy}px) scale(${s.cs}) rotate(${s.cr}deg)`;
+      });
+      rafId = requestAnimationFrame(animate);
+    };
+    rafId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (!isTouch) {
+        mouseHandlers.forEach(({ onMove, onLeave }, i) => {
+          buttons[i].removeEventListener("mousemove", onMove);
+          buttons[i].removeEventListener("mouseleave", onLeave);
+        });
+      }
+    };
+  }, [tab]);
+
+  useEffect(() => {
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      // @ts-expect-error iOS Safari
+      window.navigator.standalone === true;
+    if (isStandalone) {
+      setCanInstall(false);
+      setShowInstallModal(false);
+      return;
+    }
+
+    const adoptPrompt = (evt: BeforeInstallPromptEvent | null | undefined) => {
+      if (!evt) return;
+      try {
+        evt.preventDefault();
+      } catch {}
+      deferredPrompt.current = evt;
+      window.__kfDeferredPrompt = evt;
+      setCanInstall(true);
+      tryShowModal();
+    };
+
+    adoptPrompt(window.__kfDeferredPrompt ?? null);
+
+    const onKfBip = () => adoptPrompt(window.__kfDeferredPrompt ?? null);
+    const onBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      adoptPrompt(e as BeforeInstallPromptEvent);
+    };
+    const onInstalled = () => {
+      window.__kfDeferredPrompt = null;
+      deferredPrompt.current = null;
+      setCanInstall(false);
+      setShowInstallModal(false);
+    };
+
+    window.addEventListener("kf-beforeinstallprompt", onKfBip);
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    window.addEventListener("appinstalled", onInstalled);
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => {
+          reg.update().catch(() => {});
+        })
+        .catch(() => {});
+    }
+
+    return () => {
+      window.removeEventListener("kf-beforeinstallprompt", onKfBip);
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, [tryShowModal]);
+
+  const handleInstall = async () => {
+    const promptEvent =
+      deferredPrompt.current || (window.__kfDeferredPrompt as BeforeInstallPromptEvent | null);
+    if (!promptEvent) {
+      setShowInstallModal(false);
+      return;
+    }
+    setShowInstallModal(false);
+    try {
+      await promptEvent.prompt();
+      const { outcome } = await promptEvent.userChoice;
+      if (outcome === "accepted") {
+        deferredPrompt.current = null;
+        window.__kfDeferredPrompt = null;
+        setCanInstall(false);
+      }
+    } catch {}
+  };
+
+  const dismissInstallModal = () => {
+    sessionStorage.setItem(INSTALL_DISMISS_KEY, "1");
+    setShowInstallModal(false);
+  };
+
+  const openMenu = () => {
+    setDrawerOpen(false);
+    setIframeReady(false);
+    setTab("menu");
+  };
+
+  const goHome = () => {
+    setTab("home");
+    setIframeReady(false);
+  };
+
+  const headerSubtitle =
+    tab === "menu" ? "Cardápio" : tab === "hours" ? "Horários" : "Açaí • Delivery";
+
+  if (loading) {
+    return (
+      <>
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-cream">
+          <div
+            className={`flex flex-col items-center transition-all duration-700 ease-out ${showLogo ? "opacity-100 scale-100" : "opacity-0 scale-90"}`}
+          >
+            <img src={LOGO} alt="King Food" className="w-44 h-44 object-contain drop-shadow-md" />
+          </div>
+          <div
+            className={`mt-8 transition-opacity duration-500 delay-300 ${showLogo ? "opacity-100" : "opacity-0"}`}
+          >
+            <div className="w-10 h-10 border-4 border-ink border-t-transparent rounded-full animate-spin" />
+          </div>
+        </div>
+        <InstallModal open={showInstallModal} onInstall={handleInstall} onDismiss={dismissInstallModal} />
+      </>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-screen overflow-hidden relative bg-cream">
+      {/* Soft orbs — Yampi-like atmosphere */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
+        <div className="absolute -top-24 -right-16 w-72 h-72 rounded-full bg-gold/25 blur-3xl" />
+        <div className="absolute top-1/3 -left-20 w-64 h-64 rounded-full bg-white/40 blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full bg-ink/[0.04] blur-3xl" />
+      </div>
+
+      {/* Promo bar — sorteio Instagram */}
+      {tab === "home" && (
+        <a
+          href={SORTEIO_IG_POST_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 z-40 block bg-ink text-cream text-center text-[11px] sm:text-xs font-extrabold tracking-wide uppercase px-3 py-2.5 hover:bg-ink/90 active:scale-[0.99] transition"
+        >
+          Sorteio no Instagram · comenta AÇAÍ e participa →
+        </a>
+      )}
+
+      {/* Header */}
+      <header
+        className={`shrink-0 z-40 border-b transition-all duration-300 ${
+          scrolled || tab !== "home"
+            ? "bg-cream/90 backdrop-blur-md border-ink/10"
+            : "bg-transparent border-transparent"
+        }`}
+      >
+        <div className="flex items-center justify-between px-4 py-2 max-w-5xl mx-auto w-full">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-1.5 rounded-xl hover:bg-ink/5 transition active:scale-90"
+              aria-label="Abrir menu"
+            >
+              <span className="block w-5 h-0.5 bg-ink rounded" />
+              <span className="block w-5 h-0.5 bg-ink rounded" />
+              <span className="block w-5 h-0.5 bg-ink rounded" />
+            </button>
+            <button
+              type="button"
+              onClick={goHome}
+              className={`flex items-center gap-2.5 active:scale-95 transition-all duration-300 ${
+                scrolled || tab !== "home"
+                  ? "opacity-100"
+                  : "opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto"
+              }`}
+            >
+              <img src={LOGO} alt="King Food" className="w-8 h-8 object-contain rounded-lg" />
+              <div className="leading-tight text-left">
+                <p className="font-bold text-sm tracking-tight text-ink">King Food</p>
+                <p className="text-[10px] text-ink/45">{headerSubtitle}</p>
+              </div>
+            </button>
+          </div>
+
+          <nav className="hidden md:flex items-center gap-1">
+            <button
+              type="button"
+              onClick={goHome}
+              className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${
+                tab === "home" ? "text-ink" : "text-ink/50 hover:text-ink hover:bg-ink/5"
+              }`}
+            >
+              Início
+            </button>
+            <button
+              type="button"
+              onClick={openMenu}
+              className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${
+                tab === "menu" ? "text-ink" : "text-ink/50 hover:text-ink hover:bg-ink/5"
+              }`}
+            >
+              Cardápio
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("hours")}
+              className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${
+                tab === "hours" ? "text-ink" : "text-ink/50 hover:text-ink hover:bg-ink/5"
+              }`}
+            >
+              Horários
+            </button>
+            <button
+              type="button"
+              onClick={openMenu}
+              className="ml-2 px-5 py-2 kf-btn-ink text-sm"
+            >
+              Pedir agora
+            </button>
+            <a
+              href={WA_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-1 px-4 py-2 rounded-pill text-sm font-bold bg-[#25D366] text-white hover:bg-[#25D366]/90 transition"
+            >
+              WhatsApp
+            </a>
+          </nav>
+
+          <div className="flex items-center gap-2">
+            {tab === "home" && (
+              <button
+                type="button"
+                onClick={openMenu}
+                className="md:hidden text-xs font-extrabold text-cream bg-ink px-3.5 py-1.5 rounded-pill shadow-cta active:scale-95 transition"
+              >
+                Pedir
+              </button>
+            )}
+            {tab !== "home" && (
+              <button
+                type="button"
+                onClick={goHome}
+                className="md:hidden text-xs font-semibold text-ink/60 px-3 py-1.5 rounded-lg hover:bg-ink/5 active:scale-95 transition"
+              >
+                ← Início
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Drawer overlay */}
+      <div
+        className={`fixed inset-0 z-50 bg-ink/40 transition-opacity duration-300 ${
+          drawerOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setDrawerOpen(false)}
+      />
+
+      {/* Drawer */}
+      <aside
+        className={`fixed top-0 left-0 z-50 h-full w-[80%] max-w-xs bg-cream border-r border-ink/10 shadow-2xl transition-transform duration-300 ease-out ${
+          drawerOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="px-4 py-5 flex items-center justify-between border-b border-ink/10">
+          <div className="flex items-center gap-3">
+            <img src={LOGO} alt="King Food" className="w-10 h-10 object-contain rounded-lg" />
+            <div>
+              <p className="font-bold text-ink">King Food</p>
+              <p className="text-xs text-ink/40">Menu</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(false)}
+            className="w-9 h-9 rounded-full bg-ink/5 flex items-center justify-center text-ink hover:bg-ink/10 transition active:scale-90"
+            aria-label="Fechar"
+          >
+            ✕
+          </button>
+        </div>
+        <nav className="py-2">
+          {SIDE_LINKS.map((link) => {
+            if (link.action === "hours") {
+              return (
+                <button
+                  key={link.label}
+                  type="button"
+                  onClick={() => {
+                    setDrawerOpen(false);
+                    setTab("hours");
+                  }}
+                  className="w-full text-left px-5 py-4 text-sm font-medium text-ink/80 hover:bg-ink hover:text-cream border-b border-ink/5 transition active:bg-ink/90"
+                >
+                  <span className="mr-3">{link.icon}</span>
+                  {link.label}
+                </button>
+              );
+            }
+            if (link.action === "menu") {
+              return (
+                <button
+                  key={link.label}
+                  type="button"
+                  onClick={() => {
+                    setDrawerOpen(false);
+                    openMenu();
+                  }}
+                  className="w-full text-left px-5 py-4 text-sm font-medium text-ink/80 hover:bg-ink hover:text-cream border-b border-ink/5 transition active:bg-ink/90"
+                >
+                  <span className="mr-3">{link.icon}</span>
+                  {link.label}
+                </button>
+              );
+            }
+            return (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setDrawerOpen(false)}
+                className="block w-full text-left px-5 py-4 text-sm font-medium text-ink/80 hover:bg-ink hover:text-cream border-b border-ink/5 transition active:bg-ink/90"
+              >
+                <span className="mr-3">{link.icon}</span>
+                {link.label}
+              </a>
+            );
+          })}
+        </nav>
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-ink/10">
+          <p className="text-xs text-ink/35 text-center">Entrega em até 40 min • Columbus, OH</p>
+        </div>
+      </aside>
+
+      {/* Menu tab */}
+      {tab === "menu" ? (
+        <div className="flex-1 relative min-h-0 bg-white max-w-5xl mx-auto w-full md:pb-0 pb-14">
+          {!iframeReady && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-cream px-6">
+              <div className="w-10 h-10 border-4 border-ink border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-ink/55">Carregando cardápio...</p>
+              <a href={MENU_URL} className="text-sm font-semibold text-ink underline">
+                Abrir em nova aba
+              </a>
+            </div>
+          )}
+          <iframe
+            src={MENU_URL}
+            className="absolute inset-0 w-full h-full border-0"
+            title="Cardápio King Food"
+            allow="payment"
+            onLoad={() => setIframeReady(true)}
+          />
+        </div>
+      ) : tab === "hours" ? (
+        <main className="flex-1 overflow-y-auto px-4 py-5 max-w-2xl mx-auto w-full md:pb-6 pb-14 relative z-10">
+          <div className="flex items-center gap-2 mb-5">
+            <span className="text-2xl" aria-hidden>
+              🕐
+            </span>
+            <h2 className="text-lg font-extrabold text-ink kf-display normal-case tracking-tight">
+              Horários e entrega
+            </h2>
+          </div>
+          <ul className="kf-card overflow-hidden divide-y divide-ink/5">
+            {HOURS.map((row) => {
+              const isToday = row.day === today;
+              const closed = row.hours === "Fechado";
+              return (
+                <li
+                  key={row.day}
+                  className={`flex items-center justify-between gap-3 px-4 py-3.5 ${
+                    isToday ? "bg-gold/25" : "bg-transparent"
+                  }`}
+                >
+                  <span
+                    className={`text-sm ${isToday ? "font-bold text-ink" : "font-medium text-ink/75"}`}
+                  >
+                    {row.label}
+                    {isToday ? " · hoje" : ""}
+                  </span>
+                  <span
+                    className={`text-sm tabular-nums ${
+                      isToday ? "font-bold text-ink" : closed ? "text-ink/30" : "text-ink/55"
+                    }`}
+                  >
+                    {row.hours}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <div className="mt-5 kf-card p-4">
+            <p className="text-sm font-bold text-ink">Entrega</p>
+            <p className="text-sm text-ink/55 mt-1">Em até 40 min • Columbus, OH</p>
+            <a
+              href={MAPS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex text-sm font-semibold text-ink underline underline-offset-2"
+            >
+              Ver no Google Maps →
+            </a>
+          </div>
+        </main>
+      ) : (
+        /* Home */
+        <main ref={mainRef} className="flex-1 overflow-y-auto md:pb-6 pb-14 relative z-10">
+          <div className="max-w-sm md:max-w-lg mx-auto flex flex-col items-center md:items-start text-center md:text-left px-5 pt-8 pb-8 md:pt-20">
+            <div className="relative mb-4">
+              <div className="absolute inset-0 -m-3 rounded-3xl bg-white/50 blur-sm" aria-hidden />
+              <img
+                src={LOGO}
+                alt="King Food"
+                className="relative w-20 h-20 md:w-28 md:h-28 object-contain rounded-2xl"
+              />
+            </div>
+
+            <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-ink/45 mb-2">
+              Delivery · Columbus, OH
+            </p>
+            <h1 className="kf-display text-3xl md:text-5xl text-ink mb-2">
+              King Food
+            </h1>
+            <p className="text-sm md:text-base text-ink/70 font-semibold mb-1">
+              Açaí brasileiro de verdade
+            </p>
+            <p className="text-sm md:text-base text-ink/55 leading-relaxed mb-7 max-w-md">
+              Sabor do Brasil pra sua casa. Peça agora.
+            </p>
+
+            <button
+              type="button"
+              onClick={openMenu}
+              ref={ctaPrimaryRef}
+              className="w-full md:w-auto md:min-w-[240px] kf-btn-ink py-3.5 text-base will-change-transform"
+            >
+              Pedir agora →
+            </button>
+
+            <div className="w-full mt-5 grid grid-cols-2 gap-2">
+              <a
+                href={GROUP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                ref={ctaSecondaryRef}
+                className="kf-chip px-3 py-3 text-sm font-bold text-ink text-center will-change-transform"
+              >
+                Grupo WA
+              </a>
+              <a
+                href={MAPS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="kf-chip px-3 py-3 text-sm font-bold text-ink text-center"
+              >
+                Maps · avaliações
+              </a>
+              <button
+                type="button"
+                onClick={() => setTab("hours")}
+                className="kf-chip px-3 py-3 text-sm font-bold text-ink"
+              >
+                Horários
+              </button>
+              <a
+                href={INSTAGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="kf-chip px-3 py-3 text-sm font-bold text-ink text-center"
+              >
+                Instagram
+              </a>
+            </div>
+
+            {/* Product strip — Yampi-style soft product cards */}
+            <div className="w-full mt-7 kf-card p-3 flex items-center gap-3 overflow-hidden">
+              <div
+                className="shrink-0 w-16 h-16 rounded-2xl bg-cover bg-center shadow-soft"
+                style={{ backgroundImage: "url('/bg-acai.jpg')" }}
+                aria-hidden
+              />
+              <div className="min-w-0 text-left">
+                <p className="text-xs font-bold uppercase tracking-wide text-ink/40">Destaque</p>
+                <p className="text-sm font-extrabold text-ink truncate">Açaí premium no copo</p>
+                <button
+                  type="button"
+                  onClick={openMenu}
+                  className="mt-1 text-xs font-bold text-ink underline underline-offset-2"
+                >
+                  Ver no cardápio →
+                </button>
+              </div>
+            </div>
+
+            {canInstall && (
+              <button
+                type="button"
+                onClick={() => setShowInstallModal(true)}
+                className="mt-4 text-sm font-medium text-ink/35 hover:text-ink/60 py-1.5 transition"
+              >
+                + Instalar app
+              </button>
+            )}
+          </div>
+        </main>
+      )}
+
+      <InstallModal open={showInstallModal} onInstall={handleInstall} onDismiss={dismissInstallModal} />
+
+      {showInstallBanner && !showInstallModal && (
+        <div className="fixed bottom-0 left-0 right-0 z-[90] md:bottom-0 px-4 pb-16 md:pb-4">
+          <div className="mx-auto max-w-sm rounded-2xl border border-ink/10 bg-cream/95 backdrop-blur-xl p-4 shadow-2xl flex items-center gap-3">
+            <div className="shrink-0 w-11 h-11 rounded-xl bg-gold flex items-center justify-center">
+              <img src={LOGO} alt="" className="w-8 h-8 object-contain" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-ink">Instale o King Food</p>
+              <p className="text-xs text-ink/50 leading-snug">
+                {installPlatform === "ios"
+                  ? "Toque em Compartilhar → Adicionar à Tela de Início"
+                  : installPlatform === "android"
+                    ? "Adicione à tela inicial para acesso rápido"
+                    : "Instale como app no seu navegador"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (installPlatform === "android" && deferredPrompt.current) {
+                  handleInstall();
+                } else {
+                  setShowInstallBanner(false);
+                  sessionStorage.setItem(INSTALL_DISMISS_KEY, "1");
+                }
+              }}
+              className="shrink-0 rounded-pill bg-ink px-3 py-2 text-xs font-bold text-cream active:scale-95 transition"
+            >
+              {installPlatform === "ios" ? "Ver" : "Instalar"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowInstallBanner(false);
+                sessionStorage.setItem(INSTALL_DISMISS_KEY, "1");
+              }}
+              className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-ink/30 hover:text-ink/60 transition"
+              aria-label="Fechar"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Floating WhatsApp - mobile */}
+      <a
+        href={WA_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="md:hidden fixed z-[45] right-4 bottom-16 w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#25D366]/90 text-white shadow-lg shadow-[#25D366]/30 flex items-center justify-center active:scale-90 transition"
+        aria-label="WhatsApp"
+      >
+        <WhatsAppIcon className="w-7 h-7" />
+      </a>
+
+      {/* Bottom nav */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-cream/90 backdrop-blur-xl border-t border-ink/10 px-4 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+        <div className="flex items-center justify-evenly max-w-md mx-auto">
+          <button
+            type="button"
+            onClick={goHome}
+            className={`flex flex-col items-center gap-0.5 min-w-[80px] py-1 rounded-lg transition active:scale-90 ${
+              tab === "home" ? "text-ink" : "text-ink/35"
+            }`}
+          >
+            <svg
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 12l9-9 9 9" />
+              <path d="M5 10v10h14V10" />
+            </svg>
+            <span className="text-[10px] font-semibold">Início</span>
+          </button>
+          <button
+            type="button"
+            onClick={openMenu}
+            className={`flex flex-col items-center gap-0.5 min-w-[80px] py-1 rounded-lg transition active:scale-90 ${
+              tab === "menu" ? "text-ink" : "text-ink/35"
+            }`}
+          >
+            <svg
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="4" y="3" width="16" height="18" rx="2" />
+              <line x1="8" y1="8" x2="16" y2="8" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+              <line x1="8" y1="16" x2="13" y2="16" />
+            </svg>
+            <span className="text-[10px] font-semibold">Cardápio</span>
+          </button>
+        </div>
+      </nav>
+    </div>
+  );
+}
