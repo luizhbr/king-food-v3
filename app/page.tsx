@@ -3,6 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 const MENU_URL = "https://kingfood.fe-v2.ola.click/products";
+/** Deep link Olaclick — Açaí | Ferrero Rocher */
+const FEATURED_PRODUCT_URL =
+  "https://kingfood.fe-v2.ola.click/acai-premium/acai-ferrero-rocher";
+const FEATURED_IMG = "/featured-ferrero.jpg";
 const WA_URL = "https://wa.me/12673107535";
 const GROUP_URL = "https://chat.whatsapp.com/LtoVNE9AJ2u2nlrlruTxhd";
 const MAPS_URL = "https://maps.app.goo.gl/GR2gpipSMqZdH9Xy5";
@@ -110,6 +114,7 @@ export default function Home() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("home");
   const [iframeReady, setIframeReady] = useState(false);
+  const [menuSrc, setMenuSrc] = useState(MENU_URL);
   const [canInstall, setCanInstall] = useState(false);
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
@@ -343,15 +348,19 @@ export default function Home() {
     setShowInstallModal(false);
   };
 
-  const openMenu = () => {
+  const openMenu = (src: string | React.MouseEvent = MENU_URL) => {
     setDrawerOpen(false);
     setIframeReady(false);
+    if (typeof src === "string") setMenuSrc(src);
     setTab("menu");
   };
+
+  const openFeatured = () => openMenu(FEATURED_PRODUCT_URL);
 
   const goHome = () => {
     setTab("home");
     setIframeReady(false);
+    setMenuSrc(MENU_URL);
   };
 
   const headerSubtitle =
@@ -595,16 +604,18 @@ export default function Home() {
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-cream px-6">
               <div className="w-10 h-10 border-4 border-ink border-t-transparent rounded-full animate-spin" />
               <p className="text-sm text-ink/55">Carregando cardápio...</p>
-              <a href={MENU_URL} className="text-sm font-semibold text-ink underline">
+              <a href={menuSrc} className="text-sm font-semibold text-ink underline">
                 Abrir em nova aba
               </a>
             </div>
           )}
           <iframe
-            src={MENU_URL}
+            key={menuSrc}
+            src={menuSrc}
             className="absolute inset-0 w-full h-full border-0"
             title="Cardápio King Food"
             allow="payment"
+            sandbox="allow-scripts allow-same-origin allow-forms"
             onLoad={() => setIframeReady(true)}
           />
         </div>
@@ -729,25 +740,23 @@ export default function Home() {
               </a>
             </div>
 
-            {/* Product strip — Yampi-style soft product cards */}
-            <div className="w-full mt-7 kf-card p-3 flex items-center gap-3 overflow-hidden">
-              <div
-                className="shrink-0 w-16 h-16 rounded-2xl bg-cover bg-center shadow-soft"
-                style={{ backgroundImage: "url('/bg-acai.jpg')" }}
-                aria-hidden
+            {/* Destaque — Açaí | Ferrero Rocher (deep link Olaclick) */}
+            <button
+              type="button"
+              onClick={openFeatured}
+              className="w-full mt-7 kf-card p-3 flex items-center gap-3 overflow-hidden text-left hover:bg-white/70 active:scale-[0.99] transition"
+            >
+              <img
+                src={FEATURED_IMG}
+                alt="Açaí Ferrero Rocher"
+                className="shrink-0 w-16 h-16 rounded-2xl object-cover shadow-soft"
               />
-              <div className="min-w-0 text-left">
+              <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-ink/40">Destaque</p>
-                <p className="text-sm font-extrabold text-ink truncate">Açaí premium no copo</p>
-                <button
-                  type="button"
-                  onClick={openMenu}
-                  className="mt-1 text-xs font-bold text-ink underline underline-offset-2"
-                >
-                  Ver no cardápio →
-                </button>
+                <p className="text-sm font-extrabold text-ink truncate">Açaí | Ferrero Rocher</p>
+                <p className="mt-0.5 text-xs font-bold text-ink/55">US$ 17.90 · Ver no cardápio →</p>
               </div>
-            </div>
+            </button>
 
             {canInstall && (
               <button
