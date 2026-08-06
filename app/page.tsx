@@ -595,6 +595,9 @@ export default function Home() {
         </div>
       </aside>
 
+      {/* BLOCO 2 — Meio (conteúdo). flex-1 relativo: cardápio/home/horários ocupam só
+          a área entre header e bottom nav; a barra é um bloco separado na base. */}
+      <div className="relative flex-1 overflow-hidden flex flex-col">
       {/* Menu tab — iframe sempre montado (pré-carregado), fora do fluxo, só alterna visibilidade.
           z-20 > home main (z-10): cobre a home transparente quando o cardápio abre. */}
       <div
@@ -774,6 +777,7 @@ export default function Home() {
           </div>
         </main>
       )}
+      </div>{/* /BLOCO 2 Meio — cardápio/home/horários terminam acima da bottom nav */}
 
       <InstallModal open={showInstallModal} onInstall={handleInstall} onDismiss={dismissInstallModal} />
 
@@ -833,8 +837,10 @@ export default function Home() {
         <WhatsAppIcon className="w-7 h-7" />
       </a>
 
-      {/* Bottom nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-cream/90 backdrop-blur-xl border-t border-ink/10 px-4 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+      {/* BLOCO 3 — Barra de navegação inferior (bloco separado na base, não fixo).
+          shrink-0: ocupa a própria altura e o meio (flex-1) termina acima dela,
+          então o botão de adicionar ao carrinho do cardápio fica sempre visível. */}
+      <nav className="md:hidden shrink-0 z-30 bg-cream/90 backdrop-blur-xl border-t border-ink/10 px-4 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center justify-evenly max-w-md mx-auto">
           <button
             type="button"
