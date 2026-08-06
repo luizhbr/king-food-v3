@@ -350,8 +350,13 @@ export default function Home() {
 
   const openMenu = (src: string | React.MouseEvent = MENU_URL) => {
     setDrawerOpen(false);
-    setIframeReady(false);
-    if (typeof src === "string") setMenuSrc(src);
+    if (typeof src === "string") {
+      // Só recarrega se mudou o destino; se já está no menu, mantém o iframe carregado
+      if (src !== menuSrc) {
+        setIframeReady(false);
+        setMenuSrc(src);
+      }
+    }
     setTab("menu");
   };
 
@@ -597,29 +602,34 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* Menu tab */}
-      {tab === "menu" ? (
-        <div className="flex-1 relative min-h-0 bg-white max-w-5xl mx-auto w-full md:pb-0 pb-14">
-          {!iframeReady && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-cream px-6">
-              <div className="w-10 h-10 border-4 border-ink border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-ink/55">Carregando cardápio...</p>
-              <a href={menuSrc} className="text-sm font-semibold text-ink underline">
-                Abrir em nova aba
-              </a>
-            </div>
-          )}
-          <iframe
-            key={menuSrc}
-            src={menuSrc}
-            className="absolute inset-0 w-full h-full border-0"
-            title="Cardápio King Food"
-            allow="payment"
-            sandbox="allow-scripts allow-same-origin allow-forms"
-            onLoad={() => setIframeReady(true)}
-          />
-        </div>
-      ) : tab === "hours" ? (
+      {/* Menu tab — iframe sempre montado (pré-carregado), só alterna visibilidade */}
+      <div
+        className={`flex-1 relative min-h-0 bg-white max-w-5xl mx-auto w-full md:pb-0 pb-14 transition-opacity duration-300 ${
+          tab === "menu" ? "opacity-100" : "opacity-0 pointer-events-none absolute inset-0"
+        }`}
+        aria-hidden={tab !== "menu"}
+      >
+        {!iframeReady && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-cream px-6">
+            <div className="w-10 h-10 border-4 border-ink border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-ink/55">Carregando cardápio...</p>
+            <a href={menuSrc} className="text-sm font-semibold text-ink underline">
+              Abrir em nova aba
+            </a>
+          </div>
+        )}
+        <iframe
+          key={menuSrc}
+          src={menuSrc}
+          className="absolute inset-0 w-full h-full border-0"
+          title="Cardápio King Food"
+          allow="payment"
+          sandbox="allow-scripts allow-same-origin allow-forms"
+          onLoad={() => setIframeReady(true)}
+        />
+      </div>
+
+      {tab === "hours" ? (
         <main className="flex-1 overflow-y-auto px-4 py-5 max-w-2xl mx-auto w-full md:pb-6 pb-14 relative z-10">
           <div className="flex items-center gap-2 mb-5">
             <span className="text-2xl" aria-hidden>
