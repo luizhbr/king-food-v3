@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 const MENU_URL = "https://kingfood.fe-v2.ola.click/products";
-/** Deep link Olaclick — Açaí | Ferrero Rocher */
+/** Deep link Olaclick — Açaí No Abacaxi */
 const FEATURED_PRODUCT_URL =
-  "https://kingfood.fe-v2.ola.click/acai-premium/acai-ferrero-rocher";
-const FEATURED_IMG = "/featured-ferrero.jpg";
+  "https://kingfood.fe-v2.ola.click/acai-do-king/acai-tropical-no-abacaxi";
+const FEATURED_IMG = "/featured-abacaxi.png";
 const WA_URL = "https://wa.me/12673107535";
 const GROUP_URL = "https://chat.whatsapp.com/LtoVNE9AJ2u2nlrlruTxhd";
 const MAPS_URL = "https://maps.app.goo.gl/GR2gpipSMqZdH9Xy5";
@@ -748,13 +748,13 @@ export default function Home() {
             >
               <img
                 src={FEATURED_IMG}
-                alt="Açaí Ferrero Rocher"
+                alt="Açaí No Abacaxi"
                 className="shrink-0 w-16 h-16 rounded-2xl object-cover shadow-soft"
               />
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-ink/40">Destaque</p>
-                <p className="text-sm font-extrabold text-ink truncate">Açaí | Ferrero Rocher</p>
-                <p className="mt-0.5 text-xs font-bold text-ink/55">US$ 17.90 · Ver no cardápio →</p>
+                <p className="text-sm font-extrabold text-ink truncate">Açaí No Abacaxi 🍍</p>
+                <p className="mt-0.5 text-xs font-bold text-ink/55">US$ 27.00 · Ver no cardápio →</p>
               </div>
             </button>
 
