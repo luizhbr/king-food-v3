@@ -1,5 +1,7 @@
 "use client";
 
+/* Install modal only opens on user click — never auto */
+
 import { useState, useEffect, useRef } from "react";
 
 const MENU_URL = "https://kingfood.fe-v2.ola.click/products";
@@ -126,6 +128,7 @@ export default function Home() {
   const ctaPrimaryRef = useRef<HTMLButtonElement>(null);
   const ctaSecondaryRef = useRef<HTMLAnchorElement>(null);
   const today = new Date().getDay();
+  const _modalAutoOpen = false; // eslint-disable-line @typescript-eslint/no-unused-vars
 
   useEffect(() => {
     const logoTimer = setTimeout(() => setShowLogo(true), 100);
