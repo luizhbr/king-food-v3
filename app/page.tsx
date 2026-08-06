@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const MENU_URL = "https://kingfood.fe-v2.ola.click/products";
 /** Deep link Olaclick — Açaí No Abacaxi */
@@ -127,14 +127,6 @@ export default function Home() {
   const ctaSecondaryRef = useRef<HTMLAnchorElement>(null);
   const today = new Date().getDay();
 
-  const tryShowModal = useCallback(() => {
-    const dismissed = sessionStorage.getItem(INSTALL_DISMISS_KEY) === "1";
-    if (dismissed) return;
-    if (!deferredPrompt.current && !window.__kfDeferredPrompt) return;
-    setCanInstall(true);
-    if (loadingDone.current) setShowInstallModal(true);
-  }, []);
-
   useEffect(() => {
     const logoTimer = setTimeout(() => setShowLogo(true), 100);
     const safetyTimer = setTimeout(() => {
@@ -143,7 +135,6 @@ export default function Home() {
       const dismissed = sessionStorage.getItem(INSTALL_DISMISS_KEY) === "1";
       if (!dismissed && (deferredPrompt.current || window.__kfDeferredPrompt)) {
         setCanInstall(true);
-        setShowInstallModal(true);
       }
     }, 1800);
 
@@ -287,7 +278,6 @@ export default function Home() {
       deferredPrompt.current = evt;
       window.__kfDeferredPrompt = evt;
       setCanInstall(true);
-      tryShowModal();
     };
 
     adoptPrompt(window.__kfDeferredPrompt ?? null);
@@ -322,7 +312,7 @@ export default function Home() {
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
       window.removeEventListener("appinstalled", onInstalled);
     };
-  }, [tryShowModal]);
+  }, []);
 
   const handleInstall = async () => {
     const promptEvent =
