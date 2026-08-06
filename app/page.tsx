@@ -602,10 +602,10 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* Menu tab — iframe sempre montado (pré-carregado), só alterna visibilidade */}
+      {/* Menu tab — iframe sempre montado (pré-carregado), fora do fluxo, só alterna visibilidade */}
       <div
-        className={`flex-1 relative min-h-0 bg-white max-w-5xl mx-auto w-full md:pb-0 pb-14 transition-opacity duration-300 ${
-          tab === "menu" ? "opacity-100" : "opacity-0 pointer-events-none absolute inset-0"
+        className={`absolute inset-0 z-0 bg-white transition-opacity duration-300 ${
+          tab === "menu" ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         aria-hidden={tab !== "menu"}
       >
