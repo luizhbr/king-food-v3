@@ -1,8 +1,16 @@
 [{
-  "relation": ["delegate_permission/common.handle_all_urls", "delegate_permission/common.get_login_creds"],
+  "relation": [
+    "delegate_permission/common.handle_all_urls",
+    "delegate_permission/common.get_login_creds"
+  ],
   "target": {
     "namespace": "android_app",
     "package_name": "com.kingfood.myapp",
-    "sha256_cert_fingerprints": ["FA:01:CC:A8:9A:14:20:87:E3:F9:30:02:29:7F:6D:A3:57:4D:93:D8:E8:38:18:89:61:22:85:EC:99:55:79:CF"]
+    "sha256_cert_fingerprints": [
+      "FA:01:CC:A8:9A:14:20:87:E3:F9:30:02:29:7F:6D:A3:57:4D:93:D8:E8:38:18:89:61:22:85:EC:99:55:79:CF",
+      "3B:0C:55:38:39:BB:B8:30:27:D2:5A:0E:E9:E7:74:AD:F2:CE:7B:D7:D2:C8:3A:B7:81:33:6E:77:E3:D7:24:3E",
+      "E4:04:4B:1E:91:E0:AD:DE:D4:D7:A1:E3:97:97:9D:5E:BB:84:3E:26:94:C6:2E:28:09:67:5D:1C:E2:9E:36:2C",
+      "8F:6E:63:90:3F:88:8D:1C:21:8C:99:28:1F:86:76:99:B2:5E:05:C6:A1:59:B4:10:B6:D8:49:E5:E2:42:F4:5A"
+    ]
   }
 }]
