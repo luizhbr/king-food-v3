@@ -128,7 +128,7 @@ export default function Home() {
   const ctaPrimaryRef = useRef<HTMLButtonElement>(null);
   const ctaSecondaryRef = useRef<HTMLAnchorElement>(null);
   const today = new Date().getDay();
-  const _modalAutoOpen = false; // eslint-disable-line @typescript-eslint/no-unused-vars
+  const _buildId = "fix-modal-v2"; // forces chunk hash change
 
   useEffect(() => {
     const logoTimer = setTimeout(() => setShowLogo(true), 100);
@@ -385,7 +385,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden relative bg-cream">
+    <div className="flex flex-col h-screen overflow-hidden relative bg-cream" data-build="fix-modal-v2">
       {/* Soft orbs — Yampi-like atmosphere */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
         <div className="absolute -top-24 -right-16 w-72 h-72 rounded-full bg-gold/25 blur-3xl" />
