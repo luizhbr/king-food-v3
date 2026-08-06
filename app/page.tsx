@@ -595,9 +595,10 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* Menu tab — iframe sempre montado (pré-carregado), fora do fluxo, só alterna visibilidade */}
+      {/* Menu tab — iframe sempre montado (pré-carregado), fora do fluxo, só alterna visibilidade.
+          z-20 > home main (z-10): cobre a home transparente quando o cardápio abre. */}
       <div
-        className={`absolute inset-0 z-0 bg-white transition-opacity duration-300 ${
+        className={`absolute inset-0 z-20 bg-white transition-opacity duration-300 ${
           tab === "menu" ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         aria-hidden={tab !== "menu"}
