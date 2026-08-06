@@ -2,7 +2,7 @@
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "online.kingfood.twa",
+    "package_name": "com.kingfood.myapp",
     "sha256_cert_fingerprints": ["FA:01:CC:A8:9A:14:20:87:E3:F9:30:02:29:7F:6D:A3:57:4D:93:D8:E8:38:18:89:61:22:85:EC:99:55:79:CF"]
   }
 }]
